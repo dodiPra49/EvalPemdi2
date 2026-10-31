@@ -37,74 +37,32 @@ services:
       timeout: 5s
       retries: 5
 
-  laravel-cli:
+  app:
     build:
       context: ./laravel-db
       dockerfile: Dockerfile
-    container_name: evalpemdi_laravel_cli
-    restart: always
-    depends_on:
-      mariadb:
-        condition: service_healthy
-    volumes:
-      - ./laravel-db:/var/www/html
-    environment:
-      DB_CONNECTION: mysql
-      DB_HOST: mariadb
-      DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE:-evalpemdi_db}
-      DB_USERNAME: ${DB_USERNAME:-evalpemdi_user}
-      DB_PASSWORD: ${DB_PASSWORD:-evalpemdi_password}
-    networks:
-      - evalpemdi_net
-    command: ["tail", "-f", "/dev/null"]
-
-  express-api:
-    build:
-      context: ./express-api
-      dockerfile: Dockerfile
-    container_name: evalpemdi_express_api
+    container_name: evalpemdi_app
     restart: always
     depends_on:
       mariadb:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      - ./laravel-db:/var/www/html
     environment:
-      PORT: 5000
+      APP_ENV: local
+      APP_DEBUG: "true"
+      DB_CONNECTION: mysql
       DB_HOST: mariadb
       DB_PORT: 3306
-      DB_NAME: ${DB_DATABASE:-evalpemdi_db}
-      DB_USER: ${DB_USERNAME:-evalpemdi_user}
+      DB_DATABASE: ${DB_DATABASE:-evalpemdi_db}
+      DB_USERNAME: ${DB_USERNAME:-evalpemdi_user}
       DB_PASSWORD: ${DB_PASSWORD:-evalpemdi_password}
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_evalpemdi_2026_permenpan8}
-      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-24h}
     ports:
-      - "${HOST_API_PORT:-5001}:5000"
-    volumes:
-      - ./express-api:/app
-      - /app/node_modules
-      - ./express-api/storage:/app/storage
-    networks:
-      - evalpemdi_net
-
-  nextjs-frontend:
-    build:
-      context: ./nextjs-frontend
-      dockerfile: Dockerfile
-    container_name: evalpemdi_nextjs_ui
-    restart: always
-    ports:
-      - "${HOST_FRONTEND_PORT:-3001}:3000"
-    environment:
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:5001/api/v1}
-      PORT: 3000
-    volumes:
-      - ./nextjs-frontend:/app
-      - /app/node_modules
-      - /app/.next
+      - "${HOST_APP_PORT:-8000}:8000"
     networks:
       - evalpemdi_net
 

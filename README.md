@@ -5,26 +5,36 @@ Aplikasi portal terpadu untuk evaluasi kematangan Pemerintah Digital (pengganti 
 
 ---
 
-## 🏗️ Arsitektur Sistem
+## 🏗️ Arsitektur Sistem Baru (Laravel + Inertia.js + React.js)
 
-Sistem dibangun menggunakan **Arsitektur Modular / Decoupled Berbasis Docker**:
+Aplikasi telah direfaktor menjadi arsitektur monolitik modern menggunakan **Laravel 11 + Inertia.js + React.js**:
 
 ```mermaid
 graph TD
-    User([Pengguna / Asesor / Admin]) -->|Browser HTTP :3001| NextUI[Next.js Frontend Container :3000]
-    NextUI -->|REST API + Bearer JWT :5001| ExpressAPI[Express.js API Container :5000]
-    ExpressAPI -->|Read / Write Data| MariaDB[(MariaDB 10.11 Container :3306)]
-    ExpressAPI -->|In-Memory Cache & Session| Redis[(Redis 7 Cache Container :6379)]
-    ExpressAPI -->|Storage Bukti Dukung| Storage[Volume: /app/storage]
-    LaravelCLI[Laravel CLI Container] -->|php artisan migrate --seed| MariaDB
+    User([Pengguna / Asesor / Admin]) -->|HTTP :8000| LaravelApp[Laravel 11 + Inertia.js App]
+    LaravelApp -->|Inertia Rendering| ReactUI[React 19 SPA Pages & Components]
+    LaravelApp -->|Eloquent API Resources| APIEndpoints[RESTful API v1 Endpoints]
+    LaravelApp -->|OpenAPI 3.0 / Swagger UI| SwaggerDocs[/api/documentation]
+    LaravelApp -->|Read / Write| MariaDB[(MariaDB 10.11)]
+    LaravelApp -->|Cache & Session| Redis[(Redis 7)]
+    LaravelApp -->|File Storage| StoragePublic[storage/app/public/templates & evidences]
 ```
 
-### Komponen Layanan:
-1. **Frontend**: Next.js 16 (React 19), Tailwind CSS v4, Lucide Icons.
-2. **Backend REST API**: Node.js, Express.js 4.21, JSON Web Token (JWT), Multer file upload.
-3. **Database Schema & Seeding Engine**: Laravel 11/12 (PHP 8.2+ Artisan) khusus untuk migrasi DDL dan seeder 20 indikator serta kriteria kematangan.
-4. **Database Server**: MariaDB 10.11.
-5. **In-Memory Cache**: Redis 7 Alpine.
+### Karakteristik & Komponen Teknologi:
+1. **Frontend & UX**:
+   - **Inertia.js v2** + **React 19**
+   - **Tailwind CSS v4** + Lucide Icons
+   - Single Page Application (SPA) experience tanpa overhead client-side state routing manual.
+2. **Backend & RESTful API**:
+   - **Laravel 11** dengan PHP 8.2+
+   - **Laravel Eloquent API Resources** (`JsonResource`) untuk standarisasi output respons JSON relasional.
+   - **Laravel Sanctum** untuk keamanan token API.
+3. **Dokumentasi API Standar Industri**:
+   - **OpenAPI 3.0** JSON Specification (`/api/v1/openapi.json`)
+   - **Interactive Swagger UI** terintegrasi langsung di `/api/documentation`
+4. **Penyimpanan Data**:
+   - **MariaDB 10.11**: RDBMS relasional ACID untuk 9 tabel inti.
+   - **Redis 7**: Cache indikator, performa query, dan sesi.
 
 ---
 
@@ -44,36 +54,42 @@ graph TD
 
 ## 🚀 Panduan Menjalankan Aplikasi
 
-### 1. Prasyarat
-- Docker Desktop & Docker Compose
-- Git
+### Opsi A: Menggunakan Laragon / PHP Lokal & Vite (Rekomendasi Cepat)
+```bash
+cd laravel-db
+composer install
+npm install
+npm run build   # atau npm run dev untuk live reload
+php artisan migrate:fresh --seed
+php artisan storage:link
+php artisan serve
+```
 
-### 2. Menjalankan Seluruh Layanan
+### Opsi B: Menggunakan Docker Compose
 ```bash
 docker compose up -d --build
+docker compose exec app php artisan migrate:fresh --seed
+docker compose exec app php artisan storage:link
 ```
-
-### 3. Inisialisasi Database & Seeder
-Jalankan migrasi skema dan seeder master data 20 indikator:
-```bash
-docker compose exec laravel-cli php artisan migrate:fresh --seed
-```
-
-### 4. Akses Layanan
-- **Frontend Portal**: [http://localhost:3001](http://localhost:3001)
-- **Backend API**: [http://localhost:5001/api/v1](http://localhost:5001/api/v1)
-- **MariaDB Host Port**: `localhost:3310`
-- **Redis Host Port**: `localhost:6381`
 
 ---
 
-## 👥 Akun Default (Seeded)
+## 🌐 Akses Layanan & URL Penting
 
-| Role | Email / NIP | Password Default | Akses |
+- **Portal Aplikasi (Inertia + React)**: [http://localhost:8000](http://localhost:8000)
+- **Interactive Swagger UI / OpenAPI**: [http://localhost:8000/api/documentation](http://localhost:8000/api/documentation)
+- **OpenAPI 3.0 JSON Spec**: [http://localhost:8000/api/v1/openapi.json](http://localhost:8000/api/v1/openapi.json)
+
+---
+
+## 👥 Akun Percobaan (Seeded)
+
+| Peran (Role) | Email / NIP | Password Default | Akses |
 |:---|:---|:---|:---|
-| **Admin** | `admin@evalpemdi.go.id` | `password` | Manajemen Master User, Unit Kerja, Template Bukti Dukung |
-| **Koordinator** | `koordinator@evalpemdi.go.id` | `password` | Monitoring & Evaluasi Antar Unit |
-| **Penilai / Asesor** | `penilai@evalpemdi.go.id` | `password` | Penilaian Mandiri 20 Indikator & Upload Bukti Dukung |
+| **Administrator** | `admin@evalpemdi.go.id` | `password` | Manajemen Master User, Unit Kerja, Template Bukti Dukung |
+| **Koordinator** | `koordinator@evalpemdi.go.id` | `password` | Monitoring Pengawasan Kematangan Pemdi Seluruh OPD |
+| **Asesor Internal** | `penilai@evalpemdi.go.id` | `password` | Pengisian Evaluasi Mandiri 20 Indikator & Unggah Bukti Dukung |
+| **Pelaksana Kominfo** | `pelaksana.kominfo@evalpemdi.go.id` | `password` | Penilaian Mandiri Unit Khusus |
 
 ---
 
