@@ -95,6 +95,7 @@ services:
       context: ./nextjs-frontend
       dockerfile: Dockerfile
     container_name: evalpemdi_nextjs_ui
+    restart: always
     ports:
       - "${HOST_FRONTEND_PORT:-3001}:3000"
     environment:

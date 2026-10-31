@@ -24,15 +24,41 @@ router.get('/aspects', async (req, res) => {
 // GET /api/v1/master/indicators
 router.get('/indicators', async (req, res) => {
   try {
-    // 1. Ambil 20 Indikator
-    const [indicators] = await pool.query(
-      `SELECT i.id, i.indicator_number, i.aspect_id, i.name, i.weight,
-              i.description, i.supervisor_agency, i.responsible_functions,
-              a.name AS aspect_name
-       FROM indicators i
-       JOIN aspects a ON i.aspect_id = a.id
-       ORDER BY i.indicator_number ASC`
-    );
+    const { unit_code, unit, unit_id } = req.query;
+
+    let targetIndicator = null;
+    const isBkpsdmQuery = (unit_code && unit_code.toUpperCase().includes('BKPSDM')) ||
+                          (unit && unit.toUpperCase().includes('BKPSDM')) ||
+                          (unit && unit.toLowerCase().includes('kepegawaian'));
+
+    if (isBkpsdmQuery) {
+      targetIndicator = 3;
+    } else if (unit_id) {
+      const [uRows] = await pool.query('SELECT code, name FROM work_units WHERE id = ?', [unit_id]);
+      if (uRows.length > 0) {
+        const u = uRows[0];
+        if (u.code?.toUpperCase().includes('BKPSDM') || u.name?.toUpperCase().includes('BKPSDM') || u.name?.toLowerCase().includes('kepegawaian')) {
+          targetIndicator = 3;
+        }
+      }
+    }
+
+    let queryStr = `
+      SELECT i.id, i.indicator_number, i.aspect_id, i.name, i.weight,
+             i.description, i.supervisor_agency, i.responsible_functions,
+             a.name AS aspect_name
+      FROM indicators i
+      JOIN aspects a ON i.aspect_id = a.id
+    `;
+    const params = [];
+    if (targetIndicator) {
+      queryStr += ` WHERE i.indicator_number = ?`;
+      params.push(targetIndicator);
+    }
+    queryStr += ` ORDER BY i.indicator_number ASC`;
+
+    // 1. Ambil Indikator (semua atau difilter khusus unit kerja)
+    const [indicators] = await pool.query(queryStr, params);
 
     // 2. Ambil seluruh Level Kematangan
     const [levels] = await pool.query(

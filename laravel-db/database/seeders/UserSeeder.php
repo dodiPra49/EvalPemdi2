@@ -15,6 +15,10 @@ class UserSeeder extends Seeder
     {
         $diskominfoId = DB::table('work_units')->where('code', 'DISKOMINFO-01')->value('id');
         $setdaId = DB::table('work_units')->where('code', 'SETDA-01')->value('id');
+        $bappedaId = DB::table('work_units')->where('code', 'BAPPEDA-01')->value('id');
+        $inspektoratId = DB::table('work_units')->where('code', 'INSPEKTORAT-01')->value('id');
+        $disdukcapilId = DB::table('work_units')->where('code', 'DISDUKCAPIL-01')->value('id');
+        $bkpsdmId = DB::table('work_units')->where('code', 'BKPSDM-01')->value('id');
 
         $users = [
             [
@@ -40,18 +44,7 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Penanggung Jawab Unsur Pejabat',
-                'nip' => '198003152005011003',
-                'email' => 'pejabat@pemdi.go.id',
-                'password' => Hash::make('password123'),
-                'role' => 'penanggung_jawab',
-                'work_unit_id' => $diskominfoId,
-                'status' => 'active',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'name' => 'Operator Evaluasi (Pelaksana Entri Data)',
+                'name' => 'Operator Evaluasi Diskominfo',
                 'nip' => '199205202018011004',
                 'email' => 'operator@pemdi.go.id',
                 'password' => Hash::make('password123'),
@@ -62,12 +55,56 @@ class UserSeeder extends Seeder
                 'updated_at' => now(),
             ],
             [
-                'name' => 'Pelaksana Unit Kerja Diskominfo',
-                'nip' => '199507112020011005',
-                'email' => 'unit@pemdi.go.id',
+                'name' => 'Penanggung Jawab Diskominfo',
+                'nip' => '198003152005011003',
+                'email' => 'pejabat@pemdi.go.id',
                 'password' => Hash::make('password123'),
-                'role' => 'pelaksana_unit',
+                'role' => 'penanggung_jawab',
                 'work_unit_id' => $diskominfoId,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Operator Evaluasi BAPPEDA',
+                'nip' => '199103142016021001',
+                'email' => 'operator.bappeda@pemdi.go.id',
+                'password' => Hash::make('password123'),
+                'role' => 'pelaksana_entri',
+                'work_unit_id' => $bappedaId,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Operator Evaluasi Inspektorat',
+                'nip' => '198809222014031002',
+                'email' => 'operator.inspektorat@pemdi.go.id',
+                'password' => Hash::make('password123'),
+                'role' => 'pelaksana_entri',
+                'work_unit_id' => $inspektoratId,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Operator Evaluasi Disdukcapil',
+                'nip' => '199307182019012003',
+                'email' => 'operator.disdukcapil@pemdi.go.id',
+                'password' => Hash::make('password123'),
+                'role' => 'pelaksana_entri',
+                'work_unit_id' => $disdukcapilId,
+                'status' => 'active',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Operator Evaluasi BKPSDM',
+                'nip' => '199011052015041004',
+                'email' => 'operator.bkpsdm@pemdi.go.id',
+                'password' => Hash::make('password123'),
+                'role' => 'pelaksana_entri',
+                'work_unit_id' => $bkpsdmId,
                 'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -75,10 +112,12 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($users as $userData) {
-            DB::table('users')->updateOrInsert(
-                ['email' => $userData['email']],
-                $userData
-            );
+            if ($userData['work_unit_id']) {
+                DB::table('users')->updateOrInsert(
+                    ['email' => $userData['email']],
+                    $userData
+                );
+            }
         }
     }
 }

@@ -1,5 +1,7 @@
 // API client service for EVAL-PEMDI
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1';
+const API_BASE_URL = typeof window === 'undefined'
+  ? (process.env.INTERNAL_API_URL || 'http://express-api:5000/api/v1')
+  : (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/api/v1');
 
 // Helper to get auth header
 function getAuthHeaders(isFormData = false) {
@@ -18,11 +20,37 @@ function getAuthHeaders(isFormData = false) {
 
 export const api = {
   // ================= AUTH =================
-  async login(email, password) {
+  async getWorkUnitsForLogin() {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/work-units`);
+      if (!res.ok) throw new Error('Network error');
+      const json = await res.json();
+      return json.data || [];
+    } catch (err) {
+      console.warn('Menggunakan fallback data unit kerja:', err);
+      return [
+        { id: 2, code: 'DISKOMINFO-01', name: 'Dinas Komunikasi, Informatika, dan Statistik', category: 'Daerah', pic: 'Kepala Dinas Kominfo' },
+        { id: 1, code: 'SETDA-01', name: 'Sekretariat Daerah', category: 'Daerah', pic: 'Sekretaris Daerah' },
+        { id: 3, code: 'BAPPEDA-01', name: 'Badan Perencanaan Pembangunan Daerah (BAPPEDA)', category: 'Daerah', pic: 'Kepala Bappeda' },
+        { id: 4, code: 'INSPEKTORAT-01', name: 'Inspektorat Daerah', category: 'Daerah', pic: 'Inspektur Daerah' },
+        { id: 5, code: 'DISDUKCAPIL-01', name: 'Dinas Kependudukan dan Pencatatan Sipil', category: 'Daerah', pic: 'Kepala Disdukcapil' },
+        { id: 6, code: 'BKPSDM-01', name: 'Badan Kepegawaian dan Pengembangan SDM (BKPSDM)', category: 'Daerah', pic: 'Kepala BKPSDM' },
+      ];
+    }
+  },
+
+  async login(credentials, passwordParam) {
+    let body = {};
+    if (typeof credentials === 'object' && credentials !== null) {
+      body = credentials;
+    } else {
+      body = { email: credentials, password: passwordParam };
+    }
+
     const res = await fetch(`${API_BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify(body)
     });
     const json = await res.json();
     if (!res.ok || json.status !== 'success') {
@@ -60,8 +88,13 @@ export const api = {
     return json.data || [];
   },
 
-  async getIndicators() {
-    const res = await fetch(`${API_BASE_URL}/master/indicators`);
+  async getIndicators(params = null) {
+    let url = `${API_BASE_URL}/master/indicators`;
+    if (params) {
+      const query = new URLSearchParams(params).toString();
+      url += `?${query}`;
+    }
+    const res = await fetch(url);
     const json = await res.json();
     return json.data || [];
   },

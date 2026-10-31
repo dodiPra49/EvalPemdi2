@@ -117,25 +117,25 @@ export default function AdminUnitsView() {
 
   return (
     <div className="space-y-6">
-      {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/80 backdrop-blur-sm p-6 rounded-3xl border border-slate-200/80 shadow-sm">
+      {/* Top Banner in Crystalline White */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white/95 backdrop-blur-md p-6 rounded-3xl border-2 border-blue-100 shadow-xl shadow-blue-500/5">
         <div>
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold mb-2 border border-blue-200">
-            <Sparkles className="w-3.5 h-3.5 mr-1 text-blue-600" />
+          <div className="inline-flex items-center px-3.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-black mb-2 border border-blue-200">
+            <Sparkles className="w-3.5 h-3.5 mr-1 text-sky-500" />
             Kelembagaan & Entitas Kerja &bull; MySQL
           </div>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight flex items-center">
+          <h1 className="text-2xl sm:text-3xl font-black text-blue-950 tracking-tight flex items-center">
             <Building2 className="w-8 h-8 mr-2.5 text-blue-600" />
             Manajemen Master Unit Kerja / OPD
           </h1>
-          <p className="text-xs text-slate-600 mt-1.5 font-medium max-w-2xl">
+          <p className="text-xs text-blue-900/80 mt-1.5 font-bold max-w-2xl leading-relaxed">
             Kelola daftar Organisasi Perangkat Daerah (OPD), sekretariat, badan, dan dinas pelaksana evaluasi SPBE/Pemdi.
           </p>
         </div>
 
         <button
           onClick={handleOpenAdd}
-          className="px-5 py-2.5 text-xs font-black rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-md shadow-blue-500/25 flex items-center space-x-2 transition-all active:scale-95 shrink-0"
+          className="px-5 py-2.5 text-xs font-black rounded-xl bg-gradient-to-r from-blue-600 via-sky-500 to-blue-600 hover:from-blue-700 hover:to-sky-600 text-white shadow-md shadow-blue-500/25 flex items-center space-x-2 transition-all active:scale-95 shrink-0 cursor-pointer uppercase tracking-wider"
         >
           <Plus className="w-4 h-4" />
           <span>Tambah Unit Kerja Baru</span>
@@ -143,43 +143,43 @@ export default function AdminUnitsView() {
       </div>
 
       {notification.text && (
-        <div className={`p-4 rounded-2xl flex items-center space-x-2 text-xs font-bold shadow-sm animate-in fade-in ${
-          notification.type === 'error' ? 'bg-rose-50 border border-rose-200 text-rose-800' : 'bg-emerald-50 border border-emerald-200 text-emerald-800'
+        <div className={`p-4 rounded-2xl flex items-center space-x-2 text-xs font-bold shadow-sm animate-in fade-in border-2 ${
+          notification.type === 'error' ? 'bg-rose-50 border-rose-200 text-rose-800' : 'bg-blue-50 border-blue-200 text-blue-900'
         }`}>
-          {notification.type === 'error' ? <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" /> : <CheckCircle className="w-4 h-4 shrink-0 text-emerald-600" />}
-          <span>{notification.text}</span>
+          {notification.type === 'error' ? <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" /> : <CheckCircle className="w-4 h-4 shrink-0 text-blue-600" />}
+          <span className="font-extrabold">{notification.text}</span>
         </div>
       )}
 
       {/* Filter and Search Bar */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 flex flex-col sm:flex-row gap-3 justify-between items-center shadow-sm">
+      <div className="bg-white/95 border-2 border-blue-100 rounded-3xl p-5 flex flex-col sm:flex-row gap-3 justify-between items-center shadow-xl shadow-blue-500/5">
         <div className="relative w-full sm:w-96">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-blue-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Cari berdasarkan nama OPD, kode, atau PIC..."
-            className="w-full text-xs pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-600 focus:bg-white shadow-2xs transition-colors"
+            className="w-full text-xs pl-10 pr-4 py-2.5 bg-blue-50/50 border-2 border-blue-100 rounded-xl text-blue-950 placeholder-blue-300 focus:outline-none focus:border-blue-600 focus:bg-white shadow-2xs transition-colors font-medium"
           />
         </div>
 
-        <div className="text-xs text-slate-600 font-bold">
-          Total: <strong className="text-blue-700 font-black">{filteredUnits.length}</strong> Perangkat Daerah dari MySQL
+        <div className="text-xs text-blue-900 font-bold">
+          Total: <strong className="text-blue-600 font-black">{filteredUnits.length}</strong> Perangkat Daerah dari MySQL
         </div>
       </div>
 
       {/* Units Table */}
       {isLoading ? (
-        <div className="bg-white border border-slate-200 rounded-3xl p-12 flex justify-center items-center space-x-2 text-xs text-slate-500">
+        <div className="bg-white border-2 border-blue-100 rounded-3xl p-12 flex justify-center items-center space-x-2 text-xs text-blue-700 font-bold">
           <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
           <span>Memuat data perangkat daerah dari database...</span>
         </div>
       ) : (
-        <div className="bg-white border border-slate-200/90 rounded-3xl overflow-hidden shadow-sm">
+        <div className="bg-white/95 border-2 border-blue-100 rounded-3xl overflow-hidden shadow-xl shadow-blue-500/5">
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-700">
-              <thead className="bg-blue-50/80 text-blue-900 text-[11px] uppercase border-b border-blue-200 font-black">
+            <table className="w-full text-left text-sm text-blue-950">
+              <thead className="bg-blue-50 text-blue-950 text-xs uppercase border-b-2 border-blue-100 font-black">
                 <tr>
                   <th className="px-5 py-4">Kode OPD</th>
                   <th className="px-5 py-4">Nama Perangkat Daerah</th>
@@ -189,41 +189,41 @@ export default function AdminUnitsView() {
                   <th className="px-5 py-4 text-right">Aksi</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 bg-white">
+              <tbody className="divide-y divide-blue-50 bg-white">
                 {filteredUnits.map((unit) => (
                   <tr key={unit.id} className="hover:bg-blue-50/40 transition-colors">
-                    <td className="px-5 py-3.5 font-mono text-[11px] font-black text-blue-700">
+                    <td className="px-5 py-3.5 font-mono text-xs font-black text-blue-600">
                       {unit.code}
                     </td>
-                    <td className="px-5 py-3.5 font-bold text-slate-900 text-xs">
+                    <td className="px-5 py-3.5 font-black text-blue-950 text-sm">
                       {unit.name}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200">
+                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200">
                         {unit.category}
                       </span>
                     </td>
-                    <td className="px-5 py-3.5 text-slate-800 font-bold flex items-center">
-                      <UserCheck className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+                    <td className="px-5 py-3.5 text-blue-950 font-bold flex items-center text-sm">
+                      <UserCheck className="w-4 h-4 mr-1.5 text-blue-600" />
                       {unit.pic}
                     </td>
-                    <td className="px-5 py-3.5 text-blue-700 font-mono text-[11px] font-semibold">
+                    <td className="px-5 py-3.5 text-blue-600 font-mono text-xs font-bold">
                       <span className="flex items-center">
-                        <Mail className="w-3.5 h-3.5 mr-1 text-slate-400" />
+                        <Mail className="w-3.5 h-3.5 mr-1 text-blue-400" />
                         {unit.contact}
                       </span>
                     </td>
                     <td className="px-5 py-3.5 text-right space-x-2">
                       <button
                         onClick={() => handleOpenEdit(unit)}
-                        className="p-2 text-blue-600 hover:text-white rounded-xl hover:bg-blue-600 transition-colors shadow-2xs border border-blue-100 hover:border-blue-600"
+                        className="p-2 text-blue-600 hover:text-white rounded-xl hover:bg-blue-600 transition-colors shadow-2xs border border-blue-100 hover:border-blue-600 cursor-pointer"
                         title="Edit Unit Kerja"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(unit.id)}
-                        className="p-2 text-rose-600 hover:text-white rounded-xl hover:bg-rose-600 transition-colors shadow-2xs border border-rose-100 hover:border-rose-600"
+                        className="p-2 text-rose-500 hover:text-white rounded-xl hover:bg-rose-600 transition-colors shadow-2xs border border-rose-100 hover:border-rose-600 cursor-pointer"
                         title="Hapus Unit Kerja"
                       >
                         <Trash2 className="w-4 h-4" />

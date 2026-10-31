@@ -4,19 +4,19 @@ import React, { useState, useEffect } from 'react';
 import LoginPage from '../components/LoginPage';
 import AdminPanelLayout from '../components/AdminPanelLayout';
 import UserPortalLayout from '../components/UserPortalLayout';
+import { api } from '../lib/api';
 
 export default function Home() {
+  // Sesi awal selalu null agar aplikasi selalu menampilkan Halaman Login saat pertama kali dibuka
   const [currentUser, setCurrentUser] = useState(null);
 
-  // Muat sesi tersimpan dari localStorage saat halaman dibuka di browser
+  // Pastikan sesi lama dibersihkan saat pertama kali aplikasi dibuka di browser
   useEffect(() => {
     try {
-      const savedUser = localStorage.getItem('evalpemdi_session_user');
-      if (savedUser) {
-        setCurrentUser(JSON.parse(savedUser));
-      }
+      localStorage.removeItem('evalpemdi_session_user');
+      api.logout();
     } catch (e) {
-      console.warn('Gagal membaca sesi:', e);
+      // ignore
     }
   }, []);
 
@@ -30,16 +30,22 @@ export default function Home() {
   };
 
   const handleLogout = () => {
-    api.logout();
-    setCurrentUser(null);
     try {
-      localStorage.removeItem('evalpemdi_session_user');
+      if (typeof api !== 'undefined' && typeof api.logout === 'function') {
+        api.logout();
+      }
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('evalpemdi_session_user');
+        localStorage.removeItem('evalpemdi_token');
+        localStorage.removeItem('evalpemdi_user');
+      }
     } catch (e) {
       console.warn('Gagal menghapus sesi:', e);
     }
+    setCurrentUser(null);
   };
 
-  // 1. Jika belum login -> Tampilkan Halaman Login Berbasis Password
+  // 1. Tampilkan Halaman Login Berbasis Password & Akses Cepat saat pertama kali dibuka
   if (!currentUser) {
     return <LoginPage onLogin={handleLogin} />;
   }
