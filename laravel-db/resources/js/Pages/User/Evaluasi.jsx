@@ -13,14 +13,22 @@ import {
 } from 'lucide-react';
 
 export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }) {
-  const [aspects] = useState(initialAspects);
+  const toArray = (val) => {
+    if (Array.isArray(val)) return val;
+    if (val && Array.isArray(val.data)) return val.data;
+    return [];
+  };
+
+  const aspectsList = toArray(initialAspects);
+  const [aspects] = useState(aspectsList);
   const [evaluation, setEvaluation] = useState(initialEvaluation);
-  const [activeAspectId, setActiveAspectId] = useState(aspects[0]?.id || 1);
+  const [activeAspectId, setActiveAspectId] = useState(aspectsList[0]?.id || 1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState(null);
 
   const activeAspect = aspects.find(a => a.id === activeAspectId) || aspects[0] || {};
-  const currentDetails = evaluation.details || [];
+  const currentDetails = toArray(evaluation.details);
+  const activeIndicators = toArray(activeAspect.indicators);
 
   // Helper to show flash notification
   const showNotif = (msg, type = 'success') => {
@@ -51,7 +59,7 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
       if (json.success) {
         // Update local state
         setEvaluation(prev => {
-          const updatedDetails = [...(prev.details || [])];
+          const updatedDetails = [...toArray(prev.details)];
           const idx = updatedDetails.findIndex(d => d.indicator_id === indicatorId);
           if (idx >= 0) {
             updatedDetails[idx] = {
@@ -98,10 +106,10 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
       if (json.success) {
         // Update local evidence file in detail
         setEvaluation(prev => {
-          const updatedDetails = [...(prev.details || [])];
+          const updatedDetails = [...toArray(prev.details)];
           const idx = updatedDetails.findIndex(d => d.indicator_id === indicatorId);
           if (idx >= 0) {
-            const currentFiles = updatedDetails[idx].evidence_files || [];
+            const currentFiles = toArray(updatedDetails[idx].evidence_files);
             updatedDetails[idx] = {
               ...updatedDetails[idx],
               evidence_files: [...currentFiles, json.data],
@@ -135,9 +143,9 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
       const json = await res.json();
       if (json.success) {
         setEvaluation(prev => {
-          const updatedDetails = (prev.details || []).map(detail => ({
+          const updatedDetails = toArray(prev.details).map(detail => ({
             ...detail,
-            evidence_files: (detail.evidence_files || []).filter(f => f.id !== fileId),
+            evidence_files: toArray(detail.evidence_files).filter(f => f.id !== fileId),
           }));
           return { ...prev, details: updatedDetails };
         });
@@ -296,9 +304,9 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
 
         {/* List of Indicators in Active Aspect */}
         <div className="space-y-6">
-          {(activeAspect.indicators || []).map((indicator) => {
+          {activeIndicators.map((indicator) => {
             const currentAnswer = currentDetails.find(d => d.indicator_id === indicator.id);
-            const uploadedFiles = currentAnswer?.evidence_files || [];
+            const uploadedFiles = toArray(currentAnswer?.evidence_files);
 
             return (
               <IndicatorItem

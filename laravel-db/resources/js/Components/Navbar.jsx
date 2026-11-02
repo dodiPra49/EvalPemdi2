@@ -16,13 +16,15 @@ export default function Navbar() {
   const { url, props } = usePage();
   const user = props.auth?.user;
 
-  const tabs = [
+  const allTabs = [
     { href: '/evaluasi', label: 'Evaluasi Mandiri (User)', icon: FileText, badge: '20 Indikator' },
-    { href: '/admin/dashboard', label: 'Dashboard Admin', icon: LayoutDashboard },
-    { href: '/admin/users', label: 'Master User', icon: Users, badge: 'Akun' },
-    { href: '/admin/units', label: 'Master Unit Kerja', icon: Building2, badge: 'OPD' },
-    { href: '/admin/templates', label: 'Master Template', icon: FolderDown, badge: '21 File' },
+    { href: '/admin/dashboard', label: 'Dashboard Admin', icon: LayoutDashboard, adminOnly: true },
+    { href: '/admin/users', label: 'Master User', icon: Users, badge: 'Akun', adminOnly: true },
+    { href: '/admin/units', label: 'Master Unit Kerja', icon: Building2, badge: 'OPD', adminOnly: true },
+    { href: '/admin/templates', label: 'Master Template', icon: FolderDown, badge: '21 File', adminOnly: true },
   ];
+
+  const tabs = allTabs.filter(t => !t.adminOnly || user?.role === 'admin');
 
   const handleLogout = (e) => {
     e.preventDefault();

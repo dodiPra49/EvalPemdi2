@@ -26,7 +26,11 @@ export default function TemplatesPage({ initialTemplates = [], aspects = [] }) {
   });
 
   // Extract all indicators across aspects
-  const allIndicators = aspects.flatMap(a => a.indicators || []);
+  const allIndicators = aspects.flatMap(a => {
+    if (Array.isArray(a.indicators)) return a.indicators;
+    if (a.indicators && Array.isArray(a.indicators.data)) return a.indicators.data;
+    return [];
+  });
 
   const filteredTemplates = templatesList.filter(t => 
     t.title?.toLowerCase().includes(search.toLowerCase()) ||

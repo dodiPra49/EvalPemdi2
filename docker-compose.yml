@@ -66,6 +66,22 @@ services:
     networks:
       - evalpemdi_net
 
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: evalpemdi_phpmyadmin
+    restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "${HOST_PMA_PORT:-8080}:80"
+    networks:
+      - evalpemdi_net
+
 networks:
   evalpemdi_net:
     driver: bridge

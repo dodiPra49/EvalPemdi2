@@ -21,6 +21,13 @@ export default function IndicatorItem({
   onUploadFile, 
   onDeleteFile 
 }) {
+  const toArray = (val) => {
+    if (Array.isArray(val)) return val;
+    if (val && Array.isArray(val.data)) return val.data;
+    return [];
+  };
+
+  const filesList = toArray(uploadedFiles);
   const [isOpen, setIsOpen] = useState(true);
   const [notes, setNotes] = useState(currentAnswer?.explanation_notes || '');
   const [selectedFile, setSelectedFile] = useState(null);
@@ -28,7 +35,7 @@ export default function IndicatorItem({
   const [isUploading, setIsUploading] = useState(false);
 
   // Levels from indicator
-  const levels = indicator.maturity_levels || [];
+  const levels = toArray(indicator.maturity_levels);
   const selectedLevelId = currentAnswer?.selected_level_id || (levels[2] ? levels[2].id : null);
   const currentLevel = levels.find(l => l.id === selectedLevelId) || levels[2] || levels[0] || {};
   const currentScore = currentAnswer?.assessed_score || currentLevel.level_number || 3;
@@ -77,7 +84,7 @@ export default function IndicatorItem({
   };
 
   // Templates for indicator / level
-  const templates = indicator.templates || [];
+  const templates = toArray(indicator.templates);
   const levelTemplates = currentLevel.templates || templates.filter(t => t.maturity_level_id === currentLevel.id || !t.maturity_level_id);
 
   return (
@@ -293,10 +300,10 @@ export default function IndicatorItem({
             {/* Tabel Berkas Terunggah */}
             <div className="mt-4">
               <span className="text-xs font-black text-blue-950 block mb-2.5">
-                Daftar Bukti Dukung Terverifikasi ({uploadedFiles.length} File):
+                Daftar Bukti Dukung Terverifikasi ({filesList.length} File):
               </span>
 
-              {uploadedFiles.length > 0 ? (
+              {filesList.length > 0 ? (
                 <div className="overflow-x-auto rounded-2xl border-2 border-blue-100 bg-white">
                   <table className="w-full text-left text-sm text-blue-950">
                     <thead className="bg-blue-50 text-blue-950 text-xs uppercase border-b border-blue-200 font-black">
@@ -308,7 +315,7 @@ export default function IndicatorItem({
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-blue-50">
-                      {uploadedFiles.map((file) => (
+                      {filesList.map((file) => (
                         <tr key={file.id} className="hover:bg-blue-50/50 transition-colors">
                           <td className="px-4 py-3 font-bold text-blue-950 flex items-center space-x-2">
                             <FileCheck className="w-4.5 h-4.5 text-blue-600 shrink-0" />

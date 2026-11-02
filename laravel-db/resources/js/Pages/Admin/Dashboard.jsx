@@ -46,7 +46,8 @@ export default function Dashboard({ stats = {}, recentEvaluations = [] }) {
     },
   ];
 
-  const filteredEvaluations = recentEvaluations.filter(ev => 
+  const evalList = Array.isArray(recentEvaluations) ? recentEvaluations : (recentEvaluations?.data || []);
+  const filteredEvaluations = evalList.filter(ev => 
     ev.work_unit?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
     ev.predicate?.toLowerCase().includes(searchQuery.toLowerCase())
   );
