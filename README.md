@@ -72,6 +72,20 @@ docker compose exec app php artisan migrate:fresh --seed
 docker compose exec app php artisan storage:link
 ```
 
+### Memperbarui Database yang Sudah Berisi Data
+
+Setelah mengambil pembaruan aplikasi, jalankan migration baru tanpa menghapus data:
+
+```bash
+# Lokal dari folder laravel-db
+php artisan migrate
+
+# Atau bila aplikasi berjalan dengan Docker Compose dari folder root
+docker compose exec -T app php artisan migrate --force
+```
+
+Jangan gunakan `migrate:fresh` pada database yang sudah berisi data karena perintah tersebut menghapus seluruh tabel sebelum membuat ulang skema. Migration `indicator_user` diperlukan untuk menyimpan indikator tanggung jawab tiap pengguna.
+
 ---
 
 ## 🌐 Akses Layanan & URL Penting

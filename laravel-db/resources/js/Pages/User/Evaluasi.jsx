@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
 import IndicatorItem from '@/Components/IndicatorItem';
+import { getCsrfHeaders } from '@/lib/csrf';
 import { 
   Award, 
   Send, 
@@ -29,6 +30,10 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
   const activeAspect = aspects.find(a => a.id === activeAspectId) || aspects[0] || {};
   const currentDetails = toArray(evaluation.details);
   const activeIndicators = toArray(activeAspect.indicators);
+  const totalAssignedIndicators = aspects.reduce(
+    (total, aspect) => total + toArray(aspect.indicators).length,
+    0
+  );
 
   // Helper to show flash notification
   const showNotif = (msg, type = 'success') => {
@@ -44,8 +49,9 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
         body: JSON.stringify({
           evaluation_id: evaluation.id,
           indicator_id: indicatorId,
@@ -97,8 +103,9 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
         body: formData,
       });
 
@@ -136,8 +143,9 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
       });
 
       const json = await res.json();
@@ -167,8 +175,9 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
       });
 
       const json = await res.json();
@@ -255,11 +264,18 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
           </div>
         </div>
 
-        {/* 7 Aspect Tabs Selector */}
+        {aspects.length === 0 && (
+          <div className="mb-8 rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 text-sm font-bold text-amber-900">
+            Belum ada indikator yang ditetapkan sebagai tanggung jawab Anda. Hubungi administrator untuk mengatur penugasan.
+          </div>
+        )}
+
+        {/* Assigned Aspect Tabs */}
+        {aspects.length > 0 && <>
         <div className="mb-8">
           <label className="block text-xs font-black uppercase tracking-wider text-blue-950 mb-3 flex items-center">
             <BarChart3 className="w-4 h-4 mr-1.5 text-blue-600" />
-            Pilih Aspek Evaluasi (7 Aspek PermenPANRB 8/2026):
+            Pilih Aspek dari indikator tanggung jawab Anda:
           </label>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2.5">
             {aspects.map((asp) => {
@@ -322,6 +338,7 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
             );
           })}
         </div>
+        </>}
 
         {/* Bottom Submission Bar */}
         <div className="mt-12 bg-white border-2 border-blue-100 rounded-3xl p-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
@@ -334,14 +351,14 @@ export default function Evaluasi({ initialAspects = [], initialEvaluation = {} }
                 Selesaikan Penilaian Mandiri
               </h4>
               <p className="text-xs text-blue-700/80 font-bold">
-                Pastikan seluruh 20 indikator dan berkas bukti dukung telah dilengkapi sebelum finalisasi.
+                Pastikan seluruh {totalAssignedIndicators} indikator tanggung jawab Anda dan berkas bukti dukung telah dilengkapi sebelum finalisasi.
               </p>
             </div>
           </div>
 
           <button
             onClick={handleSubmitEvaluation}
-            disabled={isSubmitting || evaluation.status === 'submitted'}
+            disabled={isSubmitting || evaluation.status === 'submitted' || totalAssignedIndicators === 0}
             className="w-full sm:w-auto px-7 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-blue-500 to-sky-500 hover:from-blue-700 hover:to-sky-600 text-white font-black text-sm shadow-md shadow-blue-500/25 flex items-center justify-center space-x-2 transition-all cursor-pointer disabled:opacity-50"
           >
             <Send className="w-4 h-4" />

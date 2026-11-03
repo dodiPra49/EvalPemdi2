@@ -3,38 +3,21 @@ import { useForm, Head } from '@inertiajs/react';
 import { 
   ShieldCheck, 
   Lock, 
-  User as UserIcon, 
   ArrowRight, 
   CheckCircle2, 
-  Sparkles,
   BookOpen
 } from 'lucide-react';
 
-export default function Login() {
+export default function Login({ ippdNames = [] }) {
   const { data, setData, post, processing, errors } = useForm({
-    login: 'admin@evalpemdi.go.id',
-    password: 'password',
+    login: '',
+    password: '',
     remember: true,
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
     post('/login');
-  };
-
-  const quickLogins = [
-    { role: 'Administrator', email: 'admin@evalpemdi.go.id', pass: 'password', badge: 'Admin Master' },
-    { role: 'Koordinator', email: 'koordinator@evalpemdi.go.id', pass: 'password', badge: 'Monitoring' },
-    { role: 'Asesor Internal', email: 'penilai@evalpemdi.go.id', pass: 'password', badge: 'Evaluasi Mandiri' },
-    { role: 'Pelaksana Kominfo', email: 'pelaksana.kominfo@evalpemdi.go.id', pass: 'password', badge: 'Entry OPD' },
-  ];
-
-  const fillQuickLogin = (email, pass) => {
-    setData((prev) => ({
-      ...prev,
-      login: email,
-      password: pass,
-    }));
   };
 
   return (
@@ -63,24 +46,22 @@ export default function Login() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md px-4 sm:px-0">
         <div className="bg-white py-8 px-6 shadow-xl shadow-blue-500/5 rounded-3xl border-2 border-blue-100 sm:px-10">
           <form className="space-y-5" onSubmit={handleSubmit}>
-            {/* Login / NIP Input */}
+            {/* IPPD Selector */}
             <div>
               <label className="block text-xs font-black uppercase tracking-wider text-blue-950 mb-1.5">
-                Email Kedinasan / NIP
+                Nama IPPD
               </label>
-              <div className="relative rounded-xl shadow-2xs">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-blue-400">
-                  <UserIcon className="w-5 h-5" />
-                </div>
-                <input
-                  type="text"
-                  required
-                  value={data.login}
-                  onChange={(e) => setData('login', e.target.value)}
-                  placeholder="admin@evalpemdi.go.id atau NIP"
-                  className="w-full pl-11 pr-4 py-3 bg-white border-2 border-blue-100 rounded-xl text-blue-950 text-sm font-semibold focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all placeholder-blue-300"
-                />
-              </div>
+              <select
+                required
+                value={data.login}
+                onChange={(e) => setData('login', e.target.value)}
+                className="w-full px-4 py-3 bg-white border-2 border-blue-100 rounded-xl text-blue-950 text-sm font-semibold focus:outline-none focus:border-blue-600 focus:ring-2 focus:ring-blue-100 transition-all"
+              >
+                <option value="" disabled>Pilih nama IPPD</option>
+                {ippdNames.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+              </select>
               {errors.login && (
                 <p className="mt-1 text-xs text-rose-600 font-bold">{errors.login}</p>
               )}
@@ -119,27 +100,6 @@ export default function Login() {
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
-
-          {/* Quick Demo Logins */}
-          <div className="mt-6 pt-5 border-t border-blue-100">
-            <span className="text-xs font-black text-blue-950 uppercase tracking-wider block mb-2.5 flex items-center">
-              <Sparkles className="w-4 h-4 mr-1 text-blue-600" />
-              Pintasan Akun Percobaan (1-Klik):
-            </span>
-            <div className="grid grid-cols-2 gap-2">
-              {quickLogins.map((acc, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  onClick={() => fillQuickLogin(acc.email, acc.pass)}
-                  className="p-2.5 rounded-xl border border-blue-200 bg-blue-50/60 hover:bg-blue-100 text-left transition-all cursor-pointer text-xs"
-                >
-                  <p className="font-black text-blue-950">{acc.role}</p>
-                  <span className="text-blue-600 text-3xs font-mono truncate block">{acc.email}</span>
-                </button>
-              ))}
-            </div>
-          </div>
 
           {/* Link to Swagger */}
           <div className="mt-5 text-center">

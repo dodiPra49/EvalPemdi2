@@ -1,19 +1,17 @@
 import React, { useState } from 'react';
-import { Head, router } from '@inertiajs/react';
+import { Head } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
+import { getCsrfHeaders } from '@/lib/csrf';
 import { 
   Users, 
   UserPlus, 
   Search, 
   Trash2, 
   Edit, 
-  CheckCircle2, 
   X,
-  Shield,
-  Building2
 } from 'lucide-react';
 
-export default function UsersPage({ initialUsers = [], workUnits = [] }) {
+export default function UsersPage({ initialUsers = [], workUnits = [], indicators = [] }) {
   const [usersList, setUsersList] = useState(initialUsers);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -23,9 +21,9 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
     email: '',
     nip: '',
     password: '',
-    role: 'pelaksana_entri',
     status: 'active',
     work_unit_id: '',
+    responsible_indicator_ids: [],
   });
 
   const filteredUsers = usersList.filter(u => 
@@ -41,9 +39,9 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
       email: '',
       nip: '',
       password: '',
-      role: 'pelaksana_entri',
       status: 'active',
       work_unit_id: workUnits[0]?.id || '',
+      responsible_indicator_ids: [],
     });
     setIsModalOpen(true);
   };
@@ -55,9 +53,9 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
       email: user.email,
       nip: user.nip || '',
       password: '',
-      role: user.role,
       status: user.status,
       work_unit_id: user.work_unit_id || '',
+      responsible_indicator_ids: (user.responsible_indicators || []).map((indicator) => indicator.id),
     });
     setIsModalOpen(true);
   };
@@ -73,8 +71,9 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
         body: JSON.stringify(formData),
       });
 
@@ -87,11 +86,12 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
         }
         setIsModalOpen(false);
       } else {
-        alert(json.message || 'Gagal menyimpan pengguna.');
+        const validationErrors = Object.values(json.errors || {}).flat();
+        alert(validationErrors.join('\n') || json.message || 'Gagal menyimpan pengguna.');
       }
     } catch (err) {
       console.error(err);
-      alert('Terjadi kesalahan koneksi.');
+      alert(err instanceof Error ? err.message : 'Terjadi kesalahan koneksi.');
     }
   };
 
@@ -103,8 +103,9 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
       });
 
       const json = await res.json();
@@ -168,7 +169,7 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
                   <th className="px-5 py-3.5">Nama & NIP</th>
                   <th className="px-5 py-3.5">Email</th>
                   <th className="px-5 py-3.5">Unit Kerja</th>
-                  <th className="px-5 py-3.5">Peran (Role)</th>
+                  <th className="px-5 py-3.5">Indikator Tanggung Jawab</th>
                   <th className="px-5 py-3.5">Status</th>
                   <th className="px-5 py-3.5 text-right">Aksi</th>
                 </tr>
@@ -189,9 +190,25 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
                       {u.work_unit?.name || '-'}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="px-3 py-1 rounded-full text-xs font-black bg-blue-100 text-blue-800 border border-blue-200 uppercase">
-                        {u.role}
-                      </span>
+                      <div className="flex flex-wrap gap-1">
+                        {(u.responsible_indicators || []).slice(0, 3).map((indicator) => (
+                          <span
+                            key={indicator.id}
+                            title={indicator.name}
+                            className="px-2 py-1 rounded-lg text-2xs font-black bg-blue-100 text-blue-800 border border-blue-200"
+                          >
+                            Indikator {indicator.indicator_number}
+                          </span>
+                        ))}
+                        {(u.responsible_indicators || []).length > 3 && (
+                          <span className="px-2 py-1 rounded-lg text-2xs font-black bg-slate-100 text-slate-700">
+                            +{u.responsible_indicators.length - 3}
+                          </span>
+                        )}
+                        {(u.responsible_indicators || []).length === 0 && (
+                          <span className="text-xs text-slate-500">Belum ditetapkan</span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-5 py-3.5">
                       <span className={`px-2.5 py-0.5 rounded-full text-2xs font-black uppercase ${
@@ -228,7 +245,7 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
         {/* Modal Form */}
         {isModalOpen && (
           <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-            <div className="bg-white rounded-3xl border-2 border-blue-100 p-6 sm:p-8 max-w-lg w-full shadow-2xl relative">
+            <div className="bg-white rounded-3xl border-2 border-blue-100 p-6 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl relative">
               <button 
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-5 right-5 text-slate-400 hover:text-slate-600"
@@ -289,20 +306,6 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-black text-blue-950 mb-1">Peran (Role)</label>
-                    <select
-                      value={formData.role}
-                      onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full text-sm p-2.5 border-2 border-blue-100 rounded-xl font-bold bg-white focus:border-blue-600 outline-none"
-                    >
-                      <option value="admin">Admin</option>
-                      <option value="koordinator">Koordinator</option>
-                      <option value="penanggung_jawab">Penanggung Jawab</option>
-                      <option value="pelaksana_entri">Pelaksana Entri</option>
-                      <option value="pelaksana_unit">Pelaksana Unit</option>
-                    </select>
-                  </div>
-                  <div>
                     <label className="block text-xs font-black text-blue-950 mb-1">Status</label>
                     <select
                       value={formData.status}
@@ -314,6 +317,50 @@ export default function UsersPage({ initialUsers = [], workUnits = [] }) {
                     </select>
                   </div>
                 </div>
+
+                <fieldset>
+                  <legend className="block text-xs font-black text-blue-950 mb-1">
+                    Indikator Tanggung Jawab
+                  </legend>
+                  <p className="text-xs text-blue-700/80 mb-2">
+                    Pilih satu atau lebih dari 20 indikator yang menjadi tanggung jawab pengguna.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-64 overflow-y-auto border-2 border-blue-100 rounded-xl p-3">
+                    {indicators.map((indicator) => {
+                      const isSelected = formData.responsible_indicator_ids.includes(indicator.id);
+
+                      return (
+                        <label
+                          key={indicator.id}
+                          className="flex items-start gap-2 p-2 rounded-lg hover:bg-blue-50 cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={(e) => setFormData((current) => ({
+                              ...current,
+                              responsible_indicator_ids: e.target.checked
+                                ? [...current.responsible_indicator_ids, indicator.id]
+                                : current.responsible_indicator_ids.filter((id) => id !== indicator.id),
+                            }))}
+                            className="mt-0.5 accent-blue-600"
+                          />
+                          <span className="text-xs font-semibold text-blue-950">
+                            <span className="font-black">Indikator {indicator.indicator_number}:</span> {indicator.name}
+                          </span>
+                        </label>
+                      );
+                    })}
+                    {indicators.length === 0 && (
+                      <p className="text-xs text-rose-600 col-span-2">
+                        Data indikator belum tersedia. Jalankan seeder indikator terlebih dahulu.
+                      </p>
+                    )}
+                  </div>
+                  {formData.responsible_indicator_ids.length === 0 && (
+                    <p className="mt-1 text-xs text-rose-600">Pilih minimal satu indikator.</p>
+                  )}
+                </fieldset>
 
                 <div>
                   <label className="block text-xs font-black text-blue-950 mb-1">Unit Kerja / OPD</label>

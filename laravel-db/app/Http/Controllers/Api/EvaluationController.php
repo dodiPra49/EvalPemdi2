@@ -35,6 +35,7 @@ class EvaluationController extends Controller
     {
         $user = $request->user();
         $year = (int) ($request->query('year') ?? date('Y'));
+        $assignedIndicatorIds = $user->indicators()->pluck('indicators.id');
 
         // If user has no work_unit_id, pick the first unit for demo / assessment
         $workUnitId = $user->work_unit_id ?? WorkUnit::first()?->id ?? 1;
@@ -54,8 +55,10 @@ class EvaluationController extends Controller
 
         $evaluation->load([
             'workUnit',
-            'details.selectedLevel',
-            'details.evidenceFiles',
+            'details' => function ($query) use ($assignedIndicatorIds) {
+                $query->whereIn('indicator_id', $assignedIndicatorIds)
+                    ->with(['selectedLevel', 'evidenceFiles']);
+            },
         ]);
 
         return response()->json([
@@ -82,6 +85,12 @@ class EvaluationController extends Controller
             'assessed_score' => 'nullable|numeric|min:1|max:5',
             'explanation_notes' => 'nullable|string',
         ]);
+
+        abort_unless(
+            $request->user()->indicators()->whereKey($validated['indicator_id'])->exists(),
+            403,
+            'Indikator ini tidak termasuk tanggung jawab Anda.'
+        );
 
         $score = $validated['assessed_score'];
         if (!$score && !empty($validated['selected_level_id'])) {
@@ -131,6 +140,12 @@ class EvaluationController extends Controller
             'file' => 'required|file|max:25600',
         ]);
 
+        abort_unless(
+            $request->user()->indicators()->whereKey($validated['indicator_id'])->exists(),
+            403,
+            'Indikator ini tidak termasuk tanggung jawab Anda.'
+        );
+
         $file = $request->file('file');
         $fileName = 'evidence-' . time() . '-' . rand(1000, 9999) . '.' . $file->getClientOriginalExtension();
         $path = $file->storeAs('evidences', $fileName, 'public');
@@ -169,9 +184,16 @@ class EvaluationController extends Controller
      *     @OA\Response(response=200, description="Evidence deleted")
      * )
      */
-    public function deleteEvidence($id)
+    public function deleteEvidence(Request $request, $id)
     {
         $evidence = EvidenceFile::findOrFail($id);
+        abort_unless(
+            $request->user()->indicators()
+                ->whereKey($evidence->detail->indicator_id)
+                ->exists(),
+            403,
+            'Indikator ini tidak termasuk tanggung jawab Anda.'
+        );
 
         $cleanPath = str_replace('storage/', '', $evidence->file_url);
         if (Storage::disk('public')->exists($cleanPath)) {

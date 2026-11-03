@@ -44,6 +44,11 @@ class User extends Authenticatable
         return $this->hasMany(Evaluation::class, 'evaluator_user_id');
     }
 
+    public function indicators()
+    {
+        return $this->belongsToMany(Indicator::class)->withTimestamps();
+    }
+
     public function isAdmin(): bool
     {
         return $this->role === 'admin';

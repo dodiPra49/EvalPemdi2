@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
+import { getCsrfHeaders } from '@/lib/csrf';
 import { 
   FolderDown, 
   Upload, 
@@ -55,8 +56,9 @@ export default function TemplatesPage({ initialTemplates = [], aspects = [] }) {
         method: 'POST',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
         body: data,
       });
 
@@ -82,8 +84,9 @@ export default function TemplatesPage({ initialTemplates = [], aspects = [] }) {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
       });
 
       const json = await res.json();

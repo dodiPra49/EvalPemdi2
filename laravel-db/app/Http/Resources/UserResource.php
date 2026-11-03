@@ -32,6 +32,14 @@ class UserResource extends JsonResource
             'status' => $this->status,
             'work_unit_id' => $this->work_unit_id,
             'work_unit' => new WorkUnitResource($this->whenLoaded('workUnit')),
+            'responsible_indicators' => $this->whenLoaded('indicators', fn ($indicators) => $indicators
+                ->sortBy('indicator_number')
+                ->map(fn ($indicator) => [
+                    'id' => $indicator->id,
+                    'indicator_number' => (int) $indicator->indicator_number,
+                    'name' => $indicator->name,
+                ])
+                ->values()),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

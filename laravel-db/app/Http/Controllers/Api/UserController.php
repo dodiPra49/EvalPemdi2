@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\UserResource;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
 /**
@@ -26,7 +27,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        $users = User::with('workUnit')->orderBy('name')->get();
+        $users = User::with(['workUnit', 'indicators'])->orderBy('name')->get();
 
         return response()->json([
             'success' => true,
@@ -49,18 +50,27 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'nip' => 'nullable|string|max:50|unique:users,nip',
             'password' => 'required|string|min:6',
-            'role' => 'required|in:admin,koordinator,penanggung_jawab,pelaksana_entri,pelaksana_unit',
             'status' => 'required|in:active,inactive',
             'work_unit_id' => 'nullable|exists:work_units,id',
+            'responsible_indicator_ids' => 'required|array|min:1',
+            'responsible_indicator_ids.*' => 'required|integer|distinct|exists:indicators,id',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
-        $user = User::create($validated);
+        $indicatorIds = $validated['responsible_indicator_ids'];
+        unset($validated['responsible_indicator_ids']);
+
+        $user = DB::transaction(function () use ($validated, $indicatorIds) {
+            $user = User::create($validated);
+            $user->indicators()->sync($indicatorIds);
+
+            return $user;
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Pengguna berhasil ditambahkan.',
-            'data' => new UserResource($user->load('workUnit')),
+            'data' => new UserResource($user->load(['workUnit', 'indicators'])),
         ], 201);
     }
 
@@ -81,9 +91,10 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email,' . $user->id,
             'nip' => 'nullable|string|max:50|unique:users,nip,' . $user->id,
             'password' => 'nullable|string|min:6',
-            'role' => 'required|in:admin,koordinator,penanggung_jawab,pelaksana_entri,pelaksana_unit',
             'status' => 'required|in:active,inactive',
             'work_unit_id' => 'nullable|exists:work_units,id',
+            'responsible_indicator_ids' => 'required|array|min:1',
+            'responsible_indicator_ids.*' => 'required|integer|distinct|exists:indicators,id',
         ]);
 
         if (!empty($validated['password'])) {
@@ -92,12 +103,18 @@ class UserController extends Controller
             unset($validated['password']);
         }
 
-        $user->update($validated);
+        $indicatorIds = $validated['responsible_indicator_ids'];
+        unset($validated['responsible_indicator_ids']);
+
+        DB::transaction(function () use ($user, $validated, $indicatorIds) {
+            $user->update($validated);
+            $user->indicators()->sync($indicatorIds);
+        });
 
         return response()->json([
             'success' => true,
             'message' => 'Pengguna berhasil diperbarui.',
-            'data' => new UserResource($user->load('workUnit')),
+            'data' => new UserResource($user->load(['workUnit', 'indicators'])),
         ]);
     }
 

@@ -9,11 +9,13 @@ use App\Http\Resources\UserResource;
 use App\Http\Resources\WorkUnitResource;
 use App\Models\Aspect;
 use App\Models\Evaluation;
+use App\Models\Indicator;
 use App\Models\MaturityTemplate;
 use App\Models\User;
 use App\Models\WorkUnit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class WebController extends Controller
@@ -37,7 +39,14 @@ class WebController extends Controller
             return redirect()->route('home');
         }
 
-        return Inertia::render('Auth/Login');
+        return Inertia::render('Auth/Login', [
+            'ippdNames' => User::query()
+                ->whereNotNull('name')
+                ->where('name', '<>', '')
+                ->distinct()
+                ->orderBy('name')
+                ->pluck('name'),
+        ]);
     }
 
     public function login(Request $request)
@@ -47,18 +56,23 @@ class WebController extends Controller
             'password' => 'required|string',
         ]);
 
-        $login = $credentials['login'];
-        $user = User::where('email', $login)
-            ->orWhere('nip', $login)
-            ->first();
+        $users = User::where('name', $credentials['login'])->get();
+        $user = $users->first(
+            fn (User $candidate) => $candidate->status === 'active'
+                && Hash::check($credentials['password'], $candidate->password)
+        );
+        $inactiveUser = $users->first(
+            fn (User $candidate) => $candidate->status !== 'active'
+                && Hash::check($credentials['password'], $candidate->password)
+        );
 
-        if (!$user || !password_verify($credentials['password'], $user->password)) {
+        if (!$user && !$inactiveUser) {
             return back()->withErrors([
-                'login' => 'NIP/Email atau kata sandi tidak valid.',
+                'login' => 'Nama IPPD atau kata sandi tidak valid.',
             ]);
         }
 
-        if ($user->status !== 'active') {
+        if (!$user) {
             return back()->withErrors([
                 'login' => 'Akun Anda sedang dinonaktifkan.',
             ]);
@@ -91,7 +105,13 @@ class WebController extends Controller
             $workUnitId = 1;
         }
 
-        $aspects = Aspect::with(['indicators.maturityLevels', 'indicators.templates'])
+        $assignedIndicatorIds = $user->indicators()->pluck('indicators.id');
+        $aspects = Aspect::whereHas('indicators', function ($query) use ($assignedIndicatorIds) {
+            $query->whereIn('indicators.id', $assignedIndicatorIds);
+        })->with(['indicators' => function ($query) use ($assignedIndicatorIds) {
+            $query->whereIn('indicators.id', $assignedIndicatorIds)
+                ->with(['maturityLevels', 'templates']);
+        }])
             ->orderBy('order_index')
             ->get();
 
@@ -110,8 +130,10 @@ class WebController extends Controller
 
         $evaluation->load([
             'workUnit',
-            'details.selectedLevel',
-            'details.evidenceFiles',
+            'details' => function ($query) use ($assignedIndicatorIds) {
+                $query->whereIn('indicator_id', $assignedIndicatorIds)
+                    ->with(['selectedLevel', 'evidenceFiles']);
+            },
         ]);
 
         return Inertia::render('User/Evaluasi', [
@@ -140,12 +162,21 @@ class WebController extends Controller
 
     public function adminUsers()
     {
-        $users = User::with('workUnit')->orderBy('name')->get();
+        $users = User::with(['workUnit', 'indicators'])->orderBy('name')->get();
         $units = WorkUnit::orderBy('name')->get();
+        $indicators = Indicator::query()
+            ->orderBy('indicator_number')
+            ->get(['id', 'indicator_number', 'name'])
+            ->map(fn (Indicator $indicator) => [
+                'id' => $indicator->id,
+                'indicator_number' => $indicator->indicator_number,
+                'name' => $indicator->name,
+            ]);
 
         return Inertia::render('Admin/Users', [
             'initialUsers' => UserResource::collection($users)->resolve(),
             'workUnits' => WorkUnitResource::collection($units)->resolve(),
+            'indicators' => $indicators,
         ]);
     }
 

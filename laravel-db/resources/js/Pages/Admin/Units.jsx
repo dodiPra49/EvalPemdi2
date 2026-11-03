@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Head } from '@inertiajs/react';
 import Navbar from '@/Components/Navbar';
+import { getCsrfHeaders } from '@/lib/csrf';
 import { 
   Building2, 
   Plus, 
@@ -66,8 +67,9 @@ export default function UnitsPage({ initialUnits = [] }) {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
         body: JSON.stringify(formData),
       });
 
@@ -96,8 +98,9 @@ export default function UnitsPage({ initialUnits = [] }) {
         method: 'DELETE',
         headers: {
           'Accept': 'application/json',
-          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          ...getCsrfHeaders(),
         },
+        credentials: 'same-origin',
       });
 
       const json = await res.json();
